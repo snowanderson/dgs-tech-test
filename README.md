@@ -57,6 +57,7 @@ npm run format
 - NodeJS + Express + NestJS avec Typescript
 - Jest et supertest pour les tests
 - Eslint et prettier pour la qualité de code
+- Class-transformer et class-validator pour la validation des input/output
 
 ### Découpage de l'architecture
 
