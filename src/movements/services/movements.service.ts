@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ValidateMovementsDto } from '../dto/validate-movements.dto';
 import { Movement } from '../domain/entities/movement.entity';
 import { Balance } from '../domain/entities/balance.entity';
@@ -13,6 +13,8 @@ import { ValidationException } from '../exceptions/validation.exception';
  */
 @Injectable()
 export class MovementsService {
+  private readonly logger = new Logger(MovementsService.name);
+
   constructor(
     private readonly balanceValidator: BalanceValidatorService,
     private readonly movementValidator: MovementValidatorService,
@@ -24,29 +26,38 @@ export class MovementsService {
    * @param dto The DTO containing movements and balances to validate
    */
   validateMovements(dto: ValidateMovementsDto): void {
-    // First, we convert all DTO to Entities
+    this.logger.log('Starting movements validation');
+
+    this.logger.debug('Converting DTOs to entities');
     const movements = dto.movements.map(
       (m) => new Movement(m.id, m.date, m.wording, m.amount),
     );
     const balances = dto.balances.map((b) => new Balance(b.date, b.balance));
 
-    // Then, we sort them by date as we need them in a chronological order
+    this.logger.debug('Sorting movements and balances by date');
     const sortedMovements = this.sortByDate(movements);
     const sortedBalances = this.sortByDate(balances);
 
+    this.logger.debug('Validating balances');
     const balanceValidation =
       this.balanceValidator.validateBalances(sortedBalances);
 
-    // Balances need to be valid to confirm if movements are
     if (balanceValidation.hasErrors()) {
+      this.logger.warn(
+        'Balance validation failed',
+        balanceValidation.getErrors(),
+      );
       throw new ValidationException(balanceValidation.getErrors());
     }
+    this.logger.debug('Balance validation successful');
 
+    this.logger.debug('Validating movement dates');
     const movementDateValidation = this.movementValidator.validateMovementDates(
       sortedMovements,
       sortedBalances,
     );
 
+    this.logger.debug('Validating movement uniqueness');
     const movementUniquenessValidation =
       this.movementValidator.validateMovementUniqueness(sortedMovements);
 
@@ -55,21 +66,30 @@ export class MovementsService {
       movementUniquenessValidation,
     ]);
 
-    // Movements need to be all unique and be contained between two balances to be compared
     if (movementValidation.hasErrors()) {
+      this.logger.warn(
+        'Movement validation failed',
+        movementValidation.getErrors(),
+      );
       throw new ValidationException(movementValidation.getErrors());
     }
+    this.logger.debug('Movement validation successful');
 
+    this.logger.debug('Validating balance calculations');
     const balanceCalculationValidation =
       this.balanceCalculation.validateBalanceGroups(
         sortedMovements,
         sortedBalances,
       );
 
-    // If all the previous steps are valid, then we can validate all movements and throw all the errors
     if (balanceCalculationValidation.hasErrors()) {
+      this.logger.warn(
+        'Balance calculation validation failed',
+        balanceCalculationValidation.getErrors(),
+      );
       throw new ValidationException(balanceCalculationValidation.getErrors());
     }
+    this.logger.log('All validations successful');
   }
 
   /**

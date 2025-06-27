@@ -1,4 +1,11 @@
-import { Body, Controller, Post, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  HttpCode,
+  HttpStatus,
+  Logger,
+} from '@nestjs/common';
 import { MovementsService } from '../services/movements.service';
 import {
   ValidateMovementsDto,
@@ -7,6 +14,8 @@ import {
 
 @Controller('movements')
 export class MovementsController {
+  private readonly logger = new Logger(MovementsController.name);
+
   constructor(private readonly movementsService: MovementsService) {}
 
   /**
@@ -18,7 +27,19 @@ export class MovementsController {
   @Post('validate')
   @HttpCode(HttpStatus.OK)
   validate(@Body() dto: ValidateMovementsDto): ValidateMovementsResponseDto {
-    this.movementsService.validateMovements(dto);
-    return { message: 'Accepted' };
+    this.logger.log(
+      `Validating movements: ${dto.movements.length} movements, ${dto.balances.length} balances`,
+    );
+    try {
+      this.movementsService.validateMovements(dto);
+      this.logger.log('Movements validation successful');
+      return { message: 'Accepted' };
+    } catch (error) {
+      this.logger.error(
+        `Movements validation failed: ${error.message}`,
+        error.stack,
+      );
+      throw error;
+    }
   }
 }

@@ -108,3 +108,5 @@ Validation Result dans les value-objects permet un suivi facilité des résultat
 - Prendre en compte le problème de précision des nombres flottants
 - Ne plus transmettre les balances dans l'API mais les stocker dans une base
 - Intégrer Swagger pour fournir la documentation sur l'API
+- Gérer par config et variable d'env le niveau de log accepté
+- Mettre en place une CI/CD via Github Actions
