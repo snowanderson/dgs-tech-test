@@ -7,7 +7,7 @@ API réalisée via NestJS pour la validation d'opérations bancaires.
 ## Pré-requis
 
 - Docker
-- Pour le dev et les tests : NodeJS 23
+- Pour le dev et les tests : NodeJS 22
 
 ## Installation
 
